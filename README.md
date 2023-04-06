@@ -1,2 +1,2 @@
 # school-x-data
-Projects on Unity
+Repository filled with school x projects throughout my educational journey.
