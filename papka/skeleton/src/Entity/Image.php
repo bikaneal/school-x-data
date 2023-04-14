@@ -71,6 +71,7 @@ class Image
     public ?string $filePath = null;
 
     #[ORM\ManyToOne(targetEntity: User::class, inversedBy: "imageHolder")]
+    #[Groups(['media_object:read'])]
     private $user;
 
     #[ORM\Column (type: "datetime")]

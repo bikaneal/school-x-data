@@ -10,6 +10,7 @@ use App\Entity\Image;
 use DateTimeInterface;
 use App\Controller\GetUserController;
 use App\Controller\CreateImageController;
+use App\Controller\HasherController;
 use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
 use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
@@ -18,7 +19,8 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Delete;
-
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Doctrine\DBAL\Types\Types;
@@ -28,10 +30,14 @@ use Doctrine\DBAL\Types\Types;
 #[
     ApiResource(operations:[
     new Post (
-        uriTemplate: 'users',
+        uriTemplate: 'user/authorize',
+        controller: HasherController::class,
         denormalizationContext: ['groups' => 'createUser']
     ),
-    new Get(),
+    new Get(
+        uriTemplate: 'users/{id}',
+        controller: GetUserController::class
+    ),
     new GetCollection(),
     new Patch(),
     new Delete()
@@ -40,7 +46,7 @@ use Doctrine\DBAL\Types\Types;
     ApiFilter(SearchFilter::class, properties: ['id' => SearchFilter::STRATEGY_EXACT]),
     ApiFilter(DateFilter::class, properties: ['createdAt'])
 ]
-class User
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -54,6 +60,20 @@ class User
     #[ORM\Column(type: Types::TEXT, nullable: false)]
     #[Groups('createUser')]
     private string $surname;
+
+    #[ORM\Column(length: 180, unique: true)]
+    #[Groups('createUser')]
+    private ?string $email = null;
+
+    #[ORM\Column(type: 'json')]
+    private array $roles = [];
+
+    /**
+     * @var string The hashed password
+     */
+    #[ORM\Column]
+    #[Groups('createUser')]
+    private ?string $password = null;
 
     #[ORM\OneToMany(targetEntity: Image::class, mappedBy: "user")]
     private $imageHolder;
@@ -101,6 +121,18 @@ class User
         return $this->id;
     }
 
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(string $email): self
+    {
+        $this->email = $email;
+
+        return $this;
+    }
+
     public function getName(): string
     {
         return $this->name;
@@ -135,5 +167,58 @@ class User
         $this->imageHolder = $imageHolder;
 
         return $this;
+    }
+
+        /**
+     * A visual identifier that represents this user.
+     *
+     * @see UserInterface
+     */
+    public function getUserIdentifier(): string
+    {
+        return (string) $this->email;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function getRoles(): array
+    {
+        $roles = $this->roles;
+        // guarantee every user at least has ROLE_USER
+        $roles[] = 'ROLE_USER';
+
+        return array_unique($roles);
+    }
+
+    public function setRoles(array $roles): self
+    {
+        $this->roles = $roles;
+
+        return $this;
+    }
+
+    /**
+     * @see PasswordAuthenticatedUserInterface
+     */
+    public function getPassword(): string
+    {
+        return $this->password;
+    }
+
+    public function setPassword(string $password): self
+    {
+        $this->password = $password;
+
+        return $this;
+    }
+
+    /**
+     * @see UserInterface
+     */
+    public function eraseCredentials()
+    {
+        // If you store any temporary, sensitive data on the user, clear it here
+        // $this->plainPassword = null;
     }
 }
