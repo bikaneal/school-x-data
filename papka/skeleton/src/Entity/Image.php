@@ -51,7 +51,11 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
                 )
             )
         )
-])]
+]),
+    ApiFilter(OrderFilter::class, properties: ['id', 'createdAt'], arguments: ['orderParameterName' => 'order']),
+    ApiFilter(SearchFilter::class, properties: ['id' => SearchFilter::STRATEGY_EXACT]),
+    ApiFilter(DateFilter::class, properties: ['createdAt'])
+]
 class Image
 {
     #[ORM\Id]
