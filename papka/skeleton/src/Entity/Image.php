@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\ApiFilter;
 use ApiPlatform\Metadata\ApiProperty;
 use ApiPlatform\Metadata\Delete;
 use App\Repository\ImageRepository;
@@ -10,6 +11,9 @@ use Doctrine\ORM\Mapping as ORM;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Post;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
+use ApiPlatform\Doctrine\Orm\Filter\DateFilter;
+use ApiPlatform\Doctrine\Orm\Filter\OrderFilter;
 use App\Entity\User;
 use DateTimeInterface;
 use ApiPlatform\OpenApi\Model;
@@ -51,7 +55,11 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
                 )
             )
         )
-])]
+]),
+    ApiFilter(OrderFilter::class, properties: ['id', 'createdAt'], arguments: ['orderParameterName' => 'order']),
+    ApiFilter(SearchFilter::class, properties: ['id' => SearchFilter::STRATEGY_EXACT]),
+    ApiFilter(DateFilter::class, properties: ['createdAt'])
+]
 class Image
 {
     #[ORM\Id]
